@@ -1,0 +1,36 @@
+Polígono Regular: 
+Punto: (212, 342)
+Punto: (261, 325)
+
+Polígono Regular: 
+Punto: (291, 336)
+Punto: (394, 349)
+
+Polígono Regular: 
+Punto: (151, 148)
+Punto: (239, 144)
+
+Polígono Regular: 
+Punto: (125, 203)
+Punto: (163, 219)
+
+Polígono Regular: 
+Punto: (130, 227)
+Punto: (215, 159)
+
+Polígono Regular: 
+Punto: (340, 171)
+Punto: (338, 175)
+
+Polígono Regular: 
+Punto: (275, 294)
+Punto: (419, 255)
+
+Polígono Regular: 
+Punto: (383, 128)
+Punto: (472, 217)
+
+Polígono Regular: 
+Punto: (184, 94)
+Punto: (309, 200)
+
