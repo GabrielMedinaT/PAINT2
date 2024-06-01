@@ -575,7 +575,7 @@ public class VISTA extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton CARGARBOTONDEM;
     private javax.swing.ButtonGroup buttonGroup1;
-    private javax.swing.JComboBox<String> cargar;
+    
     private javax.swing.JLabel etiquetaNombre;
     private javax.swing.JLabel etiquetaNumeroVertices;
     private javax.swing.JButton guardar;
