@@ -372,7 +372,7 @@ public class VISTA extends javax.swing.JFrame {
         });
 
         jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel3.setText("CARGAR DIBUJO");
+        jLabel3.setText("Seleccionar Dibujo");
 
         etiquetaNombre.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         etiquetaNombre.setText("NOMBRE");
@@ -383,7 +383,7 @@ public class VISTA extends javax.swing.JFrame {
             }
         });
 
-        CARGARBOTONDEM.setText("jButton2");
+        CARGARBOTONDEM.setText("Cargar");
         CARGARBOTONDEM.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 CARGARBOTONDEMActionPerformed(evt);
@@ -575,7 +575,7 @@ public class VISTA extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton CARGARBOTONDEM;
     private javax.swing.ButtonGroup buttonGroup1;
-    
+    private javax.swing.JComboBox<String> cargar;
     private javax.swing.JLabel etiquetaNombre;
     private javax.swing.JLabel etiquetaNumeroVertices;
     private javax.swing.JButton guardar;

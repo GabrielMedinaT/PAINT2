@@ -365,7 +365,7 @@
     <Component class="javax.swing.JLabel" name="jLabel3">
       <Properties>
         <Property name="horizontalAlignment" type="int" value="0"/>
-        <Property name="text" type="java.lang.String" value="CARGAR DIBUJO"/>
+        <Property name="text" type="java.lang.String" value="Seleccionar Dibujo"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="etiquetaNombre">
@@ -381,7 +381,7 @@
     </Component>
     <Component class="javax.swing.JButton" name="CARGARBOTONDEM">
       <Properties>
-        <Property name="text" type="java.lang.String" value="jButton2"/>
+        <Property name="text" type="java.lang.String" value="Cargar"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="CARGARBOTONDEMActionPerformed"/>
