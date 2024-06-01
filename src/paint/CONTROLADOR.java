@@ -2,17 +2,23 @@ package paint;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 
 public class CONTROLADOR {
 
     private MODELO modelo = new MODELO();
     private PAINT paint;
+    private VISTA vista;  // Añadir una referencia a la vista
 
-    public CONTROLADOR(PAINT paint) {
+    public CONTROLADOR(PAINT paint, VISTA vista) {
         this.paint = paint;
+        this.vista = vista;  // Inicializar la referencia a la vista
     }
 
     public void dibujarPunto(int x, int y, Graphics g, Color color) {
@@ -35,7 +41,7 @@ public class CONTROLADOR {
         paint.dibujarPoligonoI(xPoints, yPoints, nPoints, g, color, paint.isRelleno());
     }
 
-    public void guardarFicheroYPoligonos(String nombre) throws SQLException {
+    public void guardarFicheroYPoligonos(String nombre) throws SQLException, IOException {
         int ficheroId = modelo.guardarFichero(nombre);
         List<PAINT.Figura> figuras = paint.obtenerFigurasDibujadas();
         for (PAINT.Figura figura : figuras) {
@@ -45,6 +51,7 @@ public class CONTROLADOR {
                 modelo.guardarPunto(poligonoId, figura.getPuntos()[i], figura.getPuntos()[i + 1]);
             }
         }
+        generarSVG(nombre, figuras);
     }
 
     public void poblarComboBox(JComboBox<String> comboBox) throws SQLException {
@@ -81,4 +88,63 @@ public class CONTROLADOR {
             }
         }
     }
+
+    private void generarSVG(String nombre, List<PAINT.Figura> figuras) throws IOException {
+        // Obtener el tamaño del área de dibujo
+        int svgWidth = vista.getAreaDibujoWidth();
+        int svgHeight = vista.getAreaDibujoHeight();
+
+        StringBuilder svgContent = new StringBuilder();
+        svgContent.append(String.format("<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"%d\" height=\"%d\">\n", svgWidth, svgHeight));
+
+        for (PAINT.Figura figura : figuras) {
+            String color = figura.getColor();
+            boolean relleno = figura.isRelleno();
+            int[] puntos = figura.getPuntos();
+            int cantidadLados = figura.getCantidadLados();
+
+            if (cantidadLados == 1) { // Punto
+                svgContent.append(String.format("<circle cx=\"%d\" cy=\"%d\" r=\"2\" fill=\"%s\" />\n", puntos[0], puntos[1], color));
+            } else if (cantidadLados == 2) { // Recta
+                svgContent.append(String.format("<line x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" stroke=\"%s\" />\n", puntos[0], puntos[1], puntos[2], puntos[3], color));
+            } else if (cantidadLados == 0) { // Circunferencia
+                int R = (int) Math.sqrt(Math.pow(puntos[2] - puntos[0], 2) + Math.pow(puntos[3] - puntos[1], 2));
+                int x = puntos[2] - R;
+                int y = puntos[3] - R;
+                if (relleno) {
+                    svgContent.append(String.format("<circle cx=\"%d\" cy=\"%d\" r=\"%d\" fill=\"%s\" />\n", x + R, y + R, R, color));
+                } else {
+                    svgContent.append(String.format("<circle cx=\"%d\" cy=\"%d\" r=\"%d\" stroke=\"%s\" fill=\"none\" />\n", x + R, y + R, R, color));
+                }
+            } else { // Polígono
+                svgContent.append("<polygon points=\"");
+                for (int i = 0; i < puntos.length; i += 2) {
+                    svgContent.append(puntos[i]).append(",").append(puntos[i + 1]).append(" ");
+                }
+                if (relleno) {
+                    svgContent.append(String.format("\" fill=\"%s\" />\n", color));
+                } else {
+                    svgContent.append(String.format("\" stroke=\"%s\" fill=\"none\" />\n", color));
+                }
+            }
+        }
+
+        svgContent.append("</svg>");
+
+        // Mostrar cuadro de diálogo para seleccionar la ubicación de guardado
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setSelectedFile(new File(nombre + ".svg"));
+        int result = fileChooser.showSaveDialog(null);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            try (FileWriter writer = new FileWriter(file)) {
+                writer.write(svgContent.toString());
+            }
+        }
+    }
+public void eliminarFichero(String nombre) throws SQLException {
+    int ficheroId = modelo.obtenerFicheroIdPorNombre(nombre);
+    modelo.eliminarFichero(ficheroId);
+}
+
 }

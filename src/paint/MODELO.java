@@ -119,4 +119,12 @@ public class MODELO {
         }
         return figuras;
     }
+    public void eliminarFichero(int ficheroId) throws SQLException {
+    String query = "DELETE FROM ficheros WHERE id = ?";
+    try (Connection con = getConnection(); PreparedStatement stmt = con.prepareStatement(query)) {
+        stmt.setInt(1, ficheroId);
+        stmt.executeUpdate();
+    }
+}
+
 }
