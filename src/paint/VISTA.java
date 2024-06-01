@@ -15,7 +15,7 @@ public class VISTA extends javax.swing.JFrame {
 
     private PAINT paint;
     private CONTROLADOR controlador; // Variable de instancia para CONTROLADOR
-    private JComboBox<String> cargar;
+   
     private JButton cargarBoton;
     private int nPoints = 3;
     private int clickCount = 0;
@@ -551,12 +551,15 @@ public class VISTA extends javax.swing.JFrame {
 
     private void CARGARBOTONDEMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CARGARBOTONDEMActionPerformed
         // TODO add your handling code here:
-         String selectedFichero = (String) cargar.getSelectedItem();
-        try {
-            controlador.cargarDibujo(selectedFichero, jPanel4.getGraphics());
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        
+          String selectedFichero = (String) cargar.getSelectedItem();
+    try {
+        Graphics g = jPanel4.getGraphics();
+        //limpiarPanel(g); // Limpiar el panel antes de cargar el nuevo dibujo
+        controlador.cargarDibujo(selectedFichero, g);
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
     }//GEN-LAST:event_CARGARBOTONDEMActionPerformed
 
     private void savePolygonCoordinates() {
@@ -571,11 +574,22 @@ public class VISTA extends javax.swing.JFrame {
             ex.printStackTrace();
         }
     }
+private void limpiarPanel(Graphics g) {
+    // Establecer el color a blanco y llenar un rectángulo del tamaño del panel para "limpiarlo"
+    g.setColor(Color.WHITE);
+    g.fillRect(0, 0, jPanel4.getWidth(), jPanel4.getHeight());
+    jPanel4.revalidate();
+    jPanel4.repaint();
+}
+
+
+
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton CARGARBOTONDEM;
     private javax.swing.ButtonGroup buttonGroup1;
-    
+    private javax.swing.JComboBox<String> cargar;
     private javax.swing.JLabel etiquetaNombre;
     private javax.swing.JLabel etiquetaNumeroVertices;
     private javax.swing.JButton guardar;
