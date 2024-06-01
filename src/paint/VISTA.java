@@ -9,10 +9,14 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import java.sql.*;
 
 public class VISTA extends javax.swing.JFrame {
 
     private PAINT paint;
+    private CONTROLADOR controlador; // Variable de instancia para CONTROLADOR
+    private JComboBox<String> cargar;
+    private JButton cargarBoton;
     private int nPoints = 3;
     private int clickCount = 0;
     private int[] vLinea = new int[3];
@@ -21,10 +25,23 @@ public class VISTA extends javax.swing.JFrame {
     private boolean MouseClickedOnce = false;
     private boolean fill = false;
     private List<Point> polygonPoints = new ArrayList<>();
-    
+    private boolean esCircunferencia;
+
     public VISTA() {
-        CONTROLADOR control = new CONTROLADOR();
+        paint = new PAINT();
+        controlador = new CONTROLADOR(paint); // Inicializa la variable de instancia controlador
         initComponents();
+        try {
+            controlador.poblarComboBox(cargar);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        cargar.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cargarActionPerformed(evt);
+            }
+        });
 
         jPanel4.setBackground(Color.WHITE);
         jColorChooser2.setColor(Color.black);
@@ -38,6 +55,13 @@ public class VISTA extends javax.swing.JFrame {
             }
         });
 
+        jColorChooser2.getSelectionModel().addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                Color newColor = jColorChooser2.getColor();
+                paint.setColor(newColor);
+            }
+        });
+
         seleccionarPunto.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
@@ -47,7 +71,7 @@ public class VISTA extends javax.swing.JFrame {
                         public void mouseClicked(MouseEvent e) {
                             Color color = jColorChooser2.getColor();
                             Graphics g = jPanel4.getGraphics();
-                            control.dibujarPunto(e.getX(), e.getY(), g, color);
+                            controlador.dibujarPunto(e.getX(), e.getY(), g, color);
                         }
                     });
                 } else if (e.getStateChange() == ItemEvent.DESELECTED) {
@@ -64,9 +88,9 @@ public class VISTA extends javax.swing.JFrame {
                         @Override
                         public void mouseClicked(MouseEvent e) {
                             Color color = jColorChooser2.getColor();
-                            if (MouseClickedOnce == true) {
+                            if (MouseClickedOnce) {
                                 Graphics g = jPanel4.getGraphics();
-                                control.dibujarRecta(e.getX(), e.getY(), vLinea[1], vLinea[2], g, color, fill);
+                                controlador.dibujarRecta(e.getX(), e.getY(), vLinea[1], vLinea[2], g, color);
                                 MouseClickedOnce = false;
                             } else {
                                 Graphics g = jPanel4.getGraphics();
@@ -90,9 +114,9 @@ public class VISTA extends javax.swing.JFrame {
                         @Override
                         public void mouseClicked(MouseEvent e) {
                             Color color = jColorChooser2.getColor();
-                            if (MouseClickedOnce == true) {
+                            if (MouseClickedOnce) {
                                 Graphics g = jPanel4.getGraphics();
-                                control.dibujarCircunferencia(e.getX(), e.getY(), vLinea[1], vLinea[2], g, color, fill);
+                                controlador.dibujarCircunferencia(e.getX(), e.getY(), vLinea[1], vLinea[2], g, color);
                                 MouseClickedOnce = false;
                             } else {
                                 Graphics g = jPanel4.getGraphics();
@@ -116,13 +140,13 @@ public class VISTA extends javax.swing.JFrame {
                         @Override
                         public void mouseClicked(MouseEvent e) {
                             Color color = jColorChooser2.getColor();
-                            if (MouseClickedOnce == true) {
+                            if (MouseClickedOnce) {
                                 Graphics g = jPanel4.getGraphics();
-                                control.dibujarPoligonoR(e.getX(), e.getY(), vLinea[1], vLinea[2], nPoints, g, color, fill);
+                                controlador.dibujarPoligonoR(e.getX(), e.getY(), vLinea[1], vLinea[2], nPoints, g, color);
                                 MouseClickedOnce = false;
                                 polygonPoints.add(new Point(e.getX(), e.getY())); // Añadir el punto final
                                 savePolygonCoordinates(); // Guardar las coordenadas en un archivo
-                                System.out.println("punto 1: " + e.getX() + " punto 2: " + e.getY() + " numero Lados " +nPoints  );
+                                System.out.println("punto 1: " + e.getX() + " punto 2: " + e.getY() + " numero Lados " + nPoints);
                             } else {
                                 Graphics g = jPanel4.getGraphics();
                                 vLinea[1] = e.getX();
@@ -138,6 +162,7 @@ public class VISTA extends javax.swing.JFrame {
                 }
             }
         });
+
         seleccionarPoligonoIrregular.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
@@ -158,7 +183,7 @@ public class VISTA extends javax.swing.JFrame {
                                 if (clickCount == nPoints) {
                                     Graphics g = jPanel4.getGraphics();
                                     Color color = jColorChooser2.getColor();
-                                    control.dibujarPoligonoI(xPoints, yPoints, nPoints, g, color, fill);
+                                    controlador.dibujarPoligonoI(xPoints, yPoints, nPoints, g, color);
                                     System.out.println("FIGURA CREADA");
 
                                     jPanel4.removeMouseListener(this);
@@ -196,14 +221,15 @@ public class VISTA extends javax.swing.JFrame {
         seleccionarPoligonoIrregular = new javax.swing.JRadioButton();
         jPanel4 = new javax.swing.JPanel();
         jColorChooser2 = new javax.swing.JColorChooser();
-        jCheckBox1 = new javax.swing.JCheckBox();
+        rellenarFigura = new javax.swing.JCheckBox();
         jLabel2 = new javax.swing.JLabel();
         jButton1 = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
-        jComboBox1 = new javax.swing.JComboBox<>();
+        guardar = new javax.swing.JButton();
+        cargar = new javax.swing.JComboBox<>();
         jLabel3 = new javax.swing.JLabel();
         etiquetaNombre = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
+        nombreArchivo = new javax.swing.JTextField();
+        CARGARBOTONDEM = new javax.swing.JButton();
 
         jRadioButton1.setText("jRadioButton1");
 
@@ -252,6 +278,7 @@ public class VISTA extends javax.swing.JFrame {
         );
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setMaximumSize(new java.awt.Dimension(1280, 720));
         setResizable(false);
 
         jSlider1.setMaximum(20);
@@ -259,10 +286,11 @@ public class VISTA extends javax.swing.JFrame {
         jSlider1.setPaintLabels(true);
         jSlider1.setSnapToTicks(true);
 
-        etiquetaNumeroVertices.setText("VERTICES POLIGONO:");
+        etiquetaNumeroVertices.setText("LADOS");
 
         buttonGroup1.add(seleccionarPunto);
-        seleccionarPunto.setText("Punto");
+        seleccionarPunto.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        seleccionarPunto.setIcon(new javax.swing.ImageIcon(getClass().getResource("/paint/Images/Punto.png"))); // NOI18N
         seleccionarPunto.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 seleccionarPuntoActionPerformed(evt);
@@ -270,14 +298,22 @@ public class VISTA extends javax.swing.JFrame {
         });
 
         buttonGroup1.add(seleccionarRecta);
-        seleccionarRecta.setText("Recta");
         seleccionarRecta.setToolTipText("");
+        seleccionarRecta.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        seleccionarRecta.setIcon(new javax.swing.ImageIcon(getClass().getResource("/paint/Images/Linea.png"))); // NOI18N
 
         buttonGroup1.add(seleccionarCircunferencia);
-        seleccionarCircunferencia.setText("Circunferencia");
+        seleccionarCircunferencia.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        seleccionarCircunferencia.setIcon(new javax.swing.ImageIcon(getClass().getResource("/paint/Images/Circunferencia.png"))); // NOI18N
+        seleccionarCircunferencia.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                seleccionarCircunferenciaActionPerformed(evt);
+            }
+        });
 
         buttonGroup1.add(seleccionarPoligonoRegular);
-        seleccionarPoligonoRegular.setText("Polígono Regular");
+        seleccionarPoligonoRegular.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        seleccionarPoligonoRegular.setIcon(new javax.swing.ImageIcon(getClass().getResource("/paint/Images/poligono.png"))); // NOI18N
         seleccionarPoligonoRegular.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 seleccionarPoligonoRegularActionPerformed(evt);
@@ -285,7 +321,13 @@ public class VISTA extends javax.swing.JFrame {
         });
 
         buttonGroup1.add(seleccionarPoligonoIrregular);
-        seleccionarPoligonoIrregular.setText("Polígono Irregular");
+        seleccionarPoligonoIrregular.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        seleccionarPoligonoIrregular.setIcon(new javax.swing.ImageIcon(getClass().getResource("/paint/Images/Irregular.png"))); // NOI18N
+        seleccionarPoligonoIrregular.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                seleccionarPoligonoIrregularActionPerformed(evt);
+            }
+        });
 
         jPanel4.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
@@ -293,19 +335,20 @@ public class VISTA extends javax.swing.JFrame {
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 579, Short.MAX_VALUE)
+            .addGap(0, 827, Short.MAX_VALUE)
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 509, Short.MAX_VALUE)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
 
         jColorChooser2.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
-        jCheckBox1.setText("Llenar Figura");
-        jCheckBox1.addActionListener(new java.awt.event.ActionListener() {
+        rellenarFigura.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        rellenarFigura.setIcon(new javax.swing.ImageIcon(getClass().getResource("/paint/Images/sinRelleno.png"))); // NOI18N
+        rellenarFigura.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jCheckBox1ActionPerformed(evt);
+                rellenarFiguraActionPerformed(evt);
             }
         });
 
@@ -315,10 +358,16 @@ public class VISTA extends javax.swing.JFrame {
 
         jButton1.setText("ELIMINAR");
 
-        jButton2.setText("GUARDAR");
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
+        guardar.setText("GUARDAR");
+        guardar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
+                guardarActionPerformed(evt);
+            }
+        });
+
+        cargar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cargarActionPerformed(evt);
             }
         });
 
@@ -328,6 +377,19 @@ public class VISTA extends javax.swing.JFrame {
         etiquetaNombre.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         etiquetaNombre.setText("NOMBRE");
 
+        nombreArchivo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                nombreArchivoActionPerformed(evt);
+            }
+        });
+
+        CARGARBOTONDEM.setText("jButton2");
+        CARGARBOTONDEM.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                CARGARBOTONDEMActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -335,176 +397,191 @@ public class VISTA extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
+                    .addComponent(rellenarFigura)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addComponent(seleccionarPoligonoRegular, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(seleccionarCircunferencia, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(seleccionarRecta, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(seleccionarPunto, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addComponent(jSlider1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                        .addComponent(seleccionarPoligonoIrregular, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jLabel2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jSlider1, javax.swing.GroupLayout.PREFERRED_SIZE, 118, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 14, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(etiquetaNombre, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(seleccionarPoligonoIrregular, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(seleccionarCircunferencia, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(seleccionarRecta, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(seleccionarPunto, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(seleccionarPoligonoRegular, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jCheckBox1, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(etiquetaNumeroVertices, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jTextField1, javax.swing.GroupLayout.Alignment.LEADING))
-                        .addGap(16, 16, 16)))
-                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(etiquetaNumeroVertices, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addGap(18, 18, 18)
+                .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jColorChooser2, javax.swing.GroupLayout.PREFERRED_SIZE, 529, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(8, 8, 8)
-                        .addComponent(jColorChooser2, javax.swing.GroupLayout.PREFERRED_SIZE, 529, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jComboBox1, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, 287, Short.MAX_VALUE))))
-                .addContainerGap())
+                        .addComponent(guardar)
+                        .addGap(99, 99, 99)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(nombreArchivo, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(etiquetaNombre, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(114, 114, 114)
+                                .addComponent(jButton1))))
+                    .addComponent(CARGARBOTONDEM)
+                    .addComponent(cargar, javax.swing.GroupLayout.PREFERRED_SIZE, 287, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 287, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(12, 12, 12))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jColorChooser2, javax.swing.GroupLayout.PREFERRED_SIZE, 315, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addContainerGap()
+                        .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(seleccionarPunto)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(etiquetaNombre)
+                                .addComponent(seleccionarRecta)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(seleccionarCircunferencia)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(seleccionarPoligonoRegular)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(seleccionarPoligonoIrregular)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(etiquetaNumeroVertices)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel2)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jSlider1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(rellenarFigura))
+                            .addComponent(jColorChooser2, javax.swing.GroupLayout.PREFERRED_SIZE, 315, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jButton1)
+                            .addComponent(etiquetaNombre)
+                            .addComponent(guardar))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(19, 19, 19)
-                        .addComponent(seleccionarPunto)
+                        .addComponent(nombreArchivo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(41, 41, 41)
+                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(seleccionarRecta)
+                        .addComponent(cargar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(seleccionarCircunferencia)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(seleccionarPoligonoRegular)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(seleccionarPoligonoIrregular)
-                        .addGap(9, 9, 9)
-                        .addComponent(etiquetaNumeroVertices)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel2)
-                            .addComponent(jSlider1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jCheckBox1)))
+                        .addComponent(CARGARBOTONDEM)
+                        .addGap(0, 186, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jCheckBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox1ActionPerformed
-        if (jCheckBox1.isSelected()) {
+    private void rellenarFiguraActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rellenarFiguraActionPerformed
+        if (rellenarFigura.isSelected()) {
             fill = true;
+            paint.setRelleno(true);
         } else {
             fill = false;
+            paint.setRelleno(false);
         }
-    }//GEN-LAST:event_jCheckBox1ActionPerformed
+    }//GEN-LAST:event_rellenarFiguraActionPerformed
 
     private void seleccionarPuntoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_seleccionarPuntoActionPerformed
-        // TODO add your handling code here:
+        if (seleccionarPunto.isSelected()) {
+            seleccionarPunto.setIcon(new javax.swing.ImageIcon(getClass().getResource("/paint/Images/puntoSelecionado.png")));
+        } else {
+            seleccionarPunto.setIcon(new javax.swing.ImageIcon(getClass().getResource("/paint/Images/Punto.png")));
+        }
     }//GEN-LAST:event_seleccionarPuntoActionPerformed
 
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        String Nombre = jTextField1.getText();
-        boolean VALIDO = true;
+    private void guardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_guardarActionPerformed
+        String nombre = nombreArchivo.getText();
+        boolean valido = true;
 
-        if ("".equals(Nombre)) {
-            VALIDO = false;
+        if ("".equals(nombre)) {
+            valido = false;
             JOptionPane.showMessageDialog(null, "EL DIBUJO DEBE TENER UN NOMBRE PARA SER GUARDADO", "ERROR", JOptionPane.ERROR_MESSAGE);
         } else {
-            if (Nombre.matches("[a-zA-ZñÑ1234567890_]+") & Nombre != "") {
+            if (nombre.matches("[a-zA-ZñÑ1234567890_]+")) {
                 System.out.println("NOMBRE VALIDO");
             } else {
-                VALIDO = false;
+                valido = false;
                 JOptionPane.showMessageDialog(null, "NOMBRE DE DIBUJO CON CARACTERES INVÁLIDOS, SOLO NÚMEROS, LETRAS Y _ PERMITIDOS", "ERROR", JOptionPane.ERROR_MESSAGE);
             }
         }
-    }//GEN-LAST:event_jButton2ActionPerformed
+
+        if (valido) {
+            try {
+                controlador.guardarFicheroYPoligonos(nombre);
+                JOptionPane.showMessageDialog(null, "Dibujo guardado correctamente.", "ÉXITO", JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, "Error al guardar el dibujo: " + e.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_guardarActionPerformed
 
     private void seleccionarPoligonoRegularActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_seleccionarPoligonoRegularActionPerformed
-        // TODO add your handling code here:
+
     }//GEN-LAST:event_seleccionarPoligonoRegularActionPerformed
 
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
+    private void nombreArchivoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nombreArchivoActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_nombreArchivoActionPerformed
+
+    private void cargarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cargarActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cargarActionPerformed
+
+    private void seleccionarCircunferenciaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_seleccionarCircunferenciaActionPerformed
+
+    }//GEN-LAST:event_seleccionarCircunferenciaActionPerformed
+
+    private void seleccionarPoligonoIrregularActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_seleccionarPoligonoIrregularActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_seleccionarPoligonoIrregularActionPerformed
+
+    private void cargarBotonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cargarBotonActionPerformed
+        // TODO add your handling code here:
+        String selectedFichero = (String) cargar.getSelectedItem();
         try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(VISTA.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(VISTA.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(VISTA.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(VISTA.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            controlador.cargarDibujo(selectedFichero, jPanel4.getGraphics());
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        //</editor-fold>
+    }//GEN-LAST:event_cargarBotonActionPerformed
 
-        
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new VISTA().setVisible(true);
-            }
-        });
-
-        
-    }
+    private void CARGARBOTONDEMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CARGARBOTONDEMActionPerformed
+        // TODO add your handling code here:
+         String selectedFichero = (String) cargar.getSelectedItem();
+        try {
+            controlador.cargarDibujo(selectedFichero, jPanel4.getGraphics());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }//GEN-LAST:event_CARGARBOTONDEMActionPerformed
 
     private void savePolygonCoordinates() {
-    try (FileWriter writer = new FileWriter("polygon_coordinates.txt", true)) {
-        writer.write("Polígono Regular: \n");
-        for (Point point : polygonPoints) {
-            writer.write("Punto: (" + point.x + ", " + point.y + ")\n");
+        try (FileWriter writer = new FileWriter("polygon_coordinates.txt", true)) {
+            writer.write("Polígono Regular: \n");
+            for (Point point : polygonPoints) {
+                writer.write("Punto: (" + point.x + ", " + point.y + ")\n");
+            }
+            writer.write("\n");
+            writer.flush();
+        } catch (IOException ex) {
+            ex.printStackTrace();
         }
-        writer.write("\n");
-        writer.flush();
-    } catch (IOException ex) {
-        ex.printStackTrace();
     }
-}
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton CARGARBOTONDEM;
     private javax.swing.ButtonGroup buttonGroup1;
+    
     private javax.swing.JLabel etiquetaNombre;
     private javax.swing.JLabel etiquetaNumeroVertices;
+    private javax.swing.JButton guardar;
     private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JCheckBox jCheckBox1;
     private javax.swing.JColorChooser jColorChooser1;
     private javax.swing.JColorChooser jColorChooser2;
-    private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JPanel jPanel1;
@@ -514,7 +591,8 @@ public class VISTA extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel5;
     private javax.swing.JRadioButton jRadioButton1;
     private javax.swing.JSlider jSlider1;
-    private javax.swing.JTextField jTextField1;
+    private javax.swing.JTextField nombreArchivo;
+    private javax.swing.JCheckBox rellenarFigura;
     private javax.swing.JRadioButton seleccionarCircunferencia;
     private javax.swing.JRadioButton seleccionarPoligonoIrregular;
     private javax.swing.JRadioButton seleccionarPoligonoRegular;
@@ -522,3 +600,4 @@ public class VISTA extends javax.swing.JFrame {
     private javax.swing.JRadioButton seleccionarRecta;
     // End of variables declaration//GEN-END:variables
 }
+//VSCODE
