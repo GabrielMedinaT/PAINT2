@@ -87,54 +87,65 @@ public class PAINT {
         figurasDibujadas.add(new Figura(new int[]{x, y, x2, y2}, fill, getColorHex(), 0));
     }
 
- public void dibujarPoligonoR(int x, int y, int x2, int y2, int nPoints, Graphics g, Color color, boolean fill) {
-    g.setColor(color);
-
-    int[] puntosX = new int[nPoints];
-    int[] puntosY = new int[nPoints];
-    int[] puntos = new int[2 * nPoints];
-
-    double radio = Math.sqrt(Math.pow((x2 - x), 2) + Math.pow((y2 - y), 2));
-    double anguloInicial = -Math.PI / 2; // Iniciar en -90 grados para que el primer punto esté en la parte superior
-    double anguloIncremento = 2 * Math.PI / nPoints;
-
-    for (int i = 0; i < nPoints; i++) {
-        double angulo = anguloInicial + i * anguloIncremento;
-        puntosX[i] = (int) (x + radio * Math.cos(angulo));
-        puntosY[i] = (int) (y + radio * Math.sin(angulo));
-        puntos[2 * i] = puntosX[i];
-        puntos[2 * i + 1] = puntosY[i];
-    }
-
-    if (fill) {
-        g.fillPolygon(puntosX, puntosY, nPoints);
-    } else {
-        g.drawPolygon(puntosX, puntosY, nPoints);
-    }
-    figurasDibujadas.add(new Figura(puntos, fill, getColorHex(), nPoints));
-}
-
-
-    public void dibujarPoligonoI(int[] xPoints, int[] yPoints, int nPoints, Graphics g, Color color, boolean fill) {
+    public void dibujarPoligonoR(int x, int y, int x2, int y2, int nPoints, Graphics g, Color color, boolean fill) {
         g.setColor(color);
 
-        if (fill) {
-            g.fillPolygon(xPoints, yPoints, nPoints);
-        } else {
-            for (int i = 0; i < nPoints; i++) {
-                int siguienteIndice = (i + 1) % nPoints;
-                g.drawLine(xPoints[i], yPoints[i], xPoints[siguienteIndice], yPoints[siguienteIndice]);
-            }
-        }
+        int[] puntosX = new int[nPoints];
+        int[] puntosY = new int[nPoints];
         int[] puntos = new int[2 * nPoints];
+
+        double radio = Math.sqrt(Math.pow((x2 - x), 2) + Math.pow((y2 - y), 2));
+        double anguloInicial = -Math.PI / 2; // Iniciar en -90 grados para que el primer punto esté en la parte superior
+        double anguloIncremento = 2 * Math.PI / nPoints;
+
         for (int i = 0; i < nPoints; i++) {
-            puntos[2 * i] = xPoints[i];
-            puntos[2 * i + 1] = yPoints[i];
+            double angulo = anguloInicial + i * anguloIncremento;
+            puntosX[i] = (int) (x + radio * Math.cos(angulo));
+            puntosY[i] = (int) (y + radio * Math.sin(angulo));
+            puntos[2 * i] = puntosX[i];
+            puntos[2 * i + 1] = puntosY[i];
+        }
+
+        if (fill) {
+            g.fillPolygon(puntosX, puntosY, nPoints);
+        } else {
+            g.drawPolygon(puntosX, puntosY, nPoints);
         }
         figurasDibujadas.add(new Figura(puntos, fill, getColorHex(), nPoints));
     }
 
+    public void dibujarPoligonoI(int[] xPoints, int[] yPoints, int nPoints, Graphics g, Color color, boolean fill, boolean finalize) {
+        g.setColor(color);
+    
+        if (fill) {
+            g.fillPolygon(xPoints, yPoints, nPoints);
+        } else {
+            for (int i = 0; i < nPoints - 1; i++) {
+                g.drawLine(xPoints[i], yPoints[i], xPoints[i + 1], yPoints[i + 1]);
+            }
+        }
+    
+        if (finalize) {
+            // Dibujar la línea que cierra el polígono
+            g.drawLine(xPoints[nPoints - 1], yPoints[nPoints - 1], xPoints[0], yPoints[0]);
+    
+            int[] puntos = new int[2 * nPoints];
+            for (int i = 0; i < nPoints; i++) {
+                puntos[2 * i] = xPoints[i];
+                puntos[2 * i + 1] = yPoints[i];
+            }
+            figurasDibujadas.add(new Figura(puntos, fill, getColorHex(), nPoints));
+        }
+    }
+    
+
     public List<Figura> obtenerFigurasDibujadas() {
         return figurasDibujadas;
+    }
+
+    public void deshacer() {
+        if (!figurasDibujadas.isEmpty()) {
+            figurasDibujadas.remove(figurasDibujadas.size() - 1);
+        }
     }
 }

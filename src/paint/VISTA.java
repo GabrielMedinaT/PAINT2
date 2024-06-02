@@ -29,12 +29,16 @@ public class VISTA extends javax.swing.JFrame {
     private boolean fill = false;
     private List<Point> polygonPoints = new ArrayList<>();
     private JDialog colorDialog; // Diálogo para el selector de color
+    private List<Point> puntosPoligono = new ArrayList<>();
+private boolean poligonoEnProgreso = false;
+
 
     public VISTA() {
         paint = new PAINT();
         controlador = new CONTROLADOR(paint, this); // Inicializa la variable de instancia controlador
         initComponents();
         initColorDialog(); // Inicializa el diálogo del selector de color
+        initUndoAction();  // Inicializa el diálogo del selector de color
     
         // Establecer el color inicial a negro
         jColorChooser2.setColor(Color.BLACK);
@@ -207,42 +211,51 @@ public class VISTA extends javax.swing.JFrame {
             }
         });
     
-        seleccionarPoligonoIrregular.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                if (e.getStateChange() == ItemEvent.SELECTED) {
-                    xPoints = new int[nPoints];
-                    yPoints = new int[nPoints];
-                    clickCount = 0;
-    
-                    areaDibujo.addMouseListener(new MouseAdapter() {
-                        @Override
-                        public void mouseClicked(MouseEvent e) {
-                            if (clickCount < nPoints) {
-                                xPoints[clickCount] = e.getX();
-                                yPoints[clickCount] = e.getY();
-                                clickCount++;
-                                System.out.println("PUNTO CREADO: (" + e.getX() + ", " + e.getY() + ")");
-    
-                                if (clickCount == nPoints) {
-                                    Graphics g = areaDibujo.getGraphics();
-                                    Color color = jColorChooser2.getColor();
-                                    controlador.dibujarPoligonoI(xPoints, yPoints, nPoints, g, color);
-                                    System.out.println("FIGURA CREADA");
-    
-                                    areaDibujo.removeMouseListener(this);
-                                }
-                            }
+ seleccionarPoligonoIrregular.addItemListener(new ItemListener() {
+    public void itemStateChanged(ItemEvent e) {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+            List<Point> puntos = new ArrayList<>();
+            areaDibujo.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    puntos.add(e.getPoint());
+                    if (e.getClickCount() == 2) { // Doble click para finalizar el polígono
+                        int nPoints = puntos.size();
+                        int[] xPoints = new int[nPoints];
+                        int[] yPoints = new int[nPoints];
+                        for (int i = 0; i < nPoints; i++) {
+                            xPoints[i] = puntos.get(i).x;
+                            yPoints[i] = puntos.get(i).y;
                         }
-                    });
-    
-                } else if (e.getStateChange() == ItemEvent.DESELECTED) {
-                    for (MouseListener listener : areaDibujo.getMouseListeners()) {
-                        areaDibujo.removeMouseListener(listener);
+                        Graphics g = areaDibujo.getGraphics();
+                        Color color = jColorChooser2.getColor();
+                        controlador.dibujarPoligonoI(xPoints, yPoints, nPoints, g, color, paint.isRelleno(), true);
+                        areaDibujo.removeMouseListener(this);
+                    } else if (puntos.size() > 1) { // Dibuja línea provisional entre el último y penúltimo punto
+                        Graphics g = areaDibujo.getGraphics();
+                        g.setColor(jColorChooser2.getColor());
+                        g.drawLine(puntos.get(puntos.size() - 2).x, puntos.get(puntos.size() - 2).y, puntos.get(puntos.size() - 1).x, puntos.get(puntos.size() - 1).y);
                     }
                 }
+            });
+        } else if (e.getStateChange() == ItemEvent.DESELECTED) {
+            for (MouseListener listener : areaDibujo.getMouseListeners()) {
+                if (listener instanceof MouseAdapter) {
+                    areaDibujo.removeMouseListener(listener);
+                }
             }
-        });
+        }
+    }
+});
+
+   
+        actualizarDibujo.addActionListener(new ActionListener() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        actualizarDibujo();
+    }
+});
+
     }
     
 
@@ -285,6 +298,7 @@ public class VISTA extends javax.swing.JFrame {
         rellenarFigura = new javax.swing.JCheckBox();
         limpiar = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
+        actualizarDibujo = new javax.swing.JButton();
 
         jRadioButton1.setText("jRadioButton1");
 
@@ -466,6 +480,13 @@ public class VISTA extends javax.swing.JFrame {
             }
         });
 
+        actualizarDibujo.setText("Actualizar");
+        actualizarDibujo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                actualizarDibujoActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -478,6 +499,8 @@ public class VISTA extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(CARGARBOTONDEM)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(actualizarDibujo)
+                        .addGap(19, 19, 19)
                         .addComponent(seleccionarPunto)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(seleccionarRecta)
@@ -487,25 +510,25 @@ public class VISTA extends javax.swing.JFrame {
                         .addComponent(seleccionarPoligonoRegular)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(seleccionarPoligonoIrregular, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(26, 26, 26)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(etiquetaNumeroVertices)
-                        .addGap(18, 18, 18)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jSlider1, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(rellenarFigura)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGap(18, 18, 18)
                         .addComponent(jButton2)
-                        .addGap(46, 46, 46)
-                        .addComponent(limpiar, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(limpiar)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(etiquetaNombre, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(nombreArchivo, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(guardar)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 80, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 72, Short.MAX_VALUE)
                         .addComponent(jButton1))
                     .addComponent(areaDibujo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
@@ -520,7 +543,8 @@ public class VISTA extends javax.swing.JFrame {
                     .addComponent(seleccionarPoligonoIrregular)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(CARGARBOTONDEM)
-                        .addComponent(cargar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(cargar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(actualizarDibujo))
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(etiquetaNombre)
                         .addComponent(limpiar)
@@ -528,12 +552,11 @@ public class VISTA extends javax.swing.JFrame {
                         .addComponent(guardar)
                         .addComponent(jButton1)
                         .addComponent(jButton2)
-                        .addComponent(rellenarFigura))
-                    .addComponent(seleccionarPunto, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(etiquetaNumeroVertices)
+                        .addComponent(rellenarFigura)
+                        .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jSlider1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(etiquetaNumeroVertices))
+                    .addComponent(seleccionarPunto, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(areaDibujo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -568,13 +591,13 @@ public class VISTA extends javax.swing.JFrame {
 
         if ("".equals(nombre)) {
             valido = false;
-            JOptionPane.showMessageDialog(null, "EL DIBUJO DEBE TENER UN NOMBRE PARA SER GUARDADO", "ERROR", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "El dibujo ha de tener un nombre", "ERROR", JOptionPane.ERROR_MESSAGE);
         } else {
-            if (nombre.matches("[a-zA-ZñÑ1234567890_]+")) {
-                System.out.println("NOMBRE VALIDO");
+            if (nombre.matches("[a-zA-ZñÑ1234567890_ ]+")) {
+                
             } else {
                 valido = false;
-                JOptionPane.showMessageDialog(null, "NOMBRE DE DIBUJO CON CARACTERES INVÁLIDOS, SOLO NÚMEROS, LETRAS Y _ PERMITIDOS", "ERROR", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null, "Mombre no valido, no se permiten caracteres esoeciales ", "ERROR", JOptionPane.ERROR_MESSAGE);
             }
         }
 
@@ -582,6 +605,7 @@ public class VISTA extends javax.swing.JFrame {
             try {
                 controlador.guardarFicheroYPoligonos(nombre);
                 JOptionPane.showMessageDialog(null, "Dibujo guardado correctamente.", "ÉXITO", JOptionPane.INFORMATION_MESSAGE);
+                controlador.poblarComboBox(cargar);
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(null, "Error al guardar el dibujo: " + e.getMessage(), "ERROR", JOptionPane.ERROR_MESSAGE);
             }
@@ -605,7 +629,47 @@ public class VISTA extends javax.swing.JFrame {
     }//GEN-LAST:event_seleccionarCircunferenciaActionPerformed
 
     private void seleccionarPoligonoIrregularActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_seleccionarPoligonoIrregularActionPerformed
-        // TODO add your handling code here:
+            if (seleccionarPoligonoIrregular.isSelected()) {
+        areaDibujo.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && poligonoEnProgreso) {
+                    // Finalizar el polígono
+                    puntosPoligono.add(e.getPoint());
+                    int nPoints = puntosPoligono.size();
+                    int[] xPoints = new int[nPoints];
+                    int[] yPoints = new int[nPoints];
+                    for (int i = 0; i < nPoints; i++) {
+                        xPoints[i] = puntosPoligono.get(i).x;
+                        yPoints[i] = puntosPoligono.get(i).y;
+                    }
+                    Graphics g = areaDibujo.getGraphics();
+                    controlador.dibujarPoligonoI(xPoints, yPoints, nPoints, g, paint.getColor(), paint.isRelleno(), true);
+                    puntosPoligono.clear();
+                    poligonoEnProgreso = false;
+                } else {
+                    // Añadir punto al polígono
+                    puntosPoligono.add(e.getPoint());
+                    if (puntosPoligono.size() > 1) {
+                        int nPoints = puntosPoligono.size();
+                        int[] xPoints = new int[nPoints];
+                        int[] yPoints = new int[nPoints];
+                        for (int i = 0; i < nPoints; i++) {
+                            xPoints[i] = puntosPoligono.get(i).x;
+                            yPoints[i] = puntosPoligono.get(i).y;
+                        }
+                        Graphics g = areaDibujo.getGraphics();
+                        controlador.dibujarPoligonoI(xPoints, yPoints, nPoints, g, paint.getColor(), paint.isRelleno(), false);
+                    }
+                    poligonoEnProgreso = true;
+                }
+            }
+        });
+    } else {
+        areaDibujo.removeMouseListener(areaDibujo.getMouseListeners()[0]);
+        puntosPoligono.clear();
+        poligonoEnProgreso = false;
+    }
     }//GEN-LAST:event_seleccionarPoligonoIrregularActionPerformed
 
     private void cargarBotonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cargarBotonActionPerformed
@@ -671,6 +735,10 @@ public class VISTA extends javax.swing.JFrame {
             colorDialog.setVisible(true);
     }//GEN-LAST:event_jButton2ActionPerformed
 
+    private void actualizarDibujoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_actualizarDibujoActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_actualizarDibujoActionPerformed
+
     private void savePolygonCoordinates() {
         try (FileWriter writer = new FileWriter("polygon_coordinates.txt", true)) {
             writer.write("Polígono Regular: \n");
@@ -702,11 +770,54 @@ public class VISTA extends javax.swing.JFrame {
     public Color getSelectedColor() {
         return jColorChooser2.getColor();
     }
+// Método para limpiar el área de dibujo
+public void limpiarPanel() {
+    Graphics g = areaDibujo.getGraphics();
+    g.setColor(areaDibujo.getBackground());
+    g.fillRect(0, 0, areaDibujo.getWidth(), areaDibujo.getHeight());
+    g.dispose(); // Libera los recursos del Graphics
+}
+
+// Método para inicializar la acción de deshacer
+private void initUndoAction() {
+    KeyStroke undoKeyStrokeCtrl = KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK);
+    KeyStroke undoKeyStrokeCmd = KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.META_DOWN_MASK);
+    Action undoAction = new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            controlador.deshacer();
+        }
+    };
+    areaDibujo.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(undoKeyStrokeCtrl, "UNDO_CTRL");
+    areaDibujo.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(undoKeyStrokeCmd, "UNDO_CMD");
+    areaDibujo.getActionMap().put("UNDO_CTRL", undoAction);
+    areaDibujo.getActionMap().put("UNDO_CMD", undoAction);
+}
+
+// Método para obtener el área de dibujo
+public JPanel getAreaDibujo() {
+    return areaDibujo;
+}
+private void actualizarDibujo() {
+    String selectedFichero = (String) cargar.getSelectedItem();
+    if (selectedFichero == null || selectedFichero.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Seleccione un dibujo para actualizar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+    try {
+        controlador.actualizarDibujo(selectedFichero);
+        JOptionPane.showMessageDialog(this, "Dibujo actualizado correctamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+    } catch (SQLException e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error al actualizar el dibujo: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
 
     
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton CARGARBOTONDEM;
+    private javax.swing.JButton actualizarDibujo;
     private javax.swing.JPanel areaDibujo;
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JComboBox<String> cargar;
