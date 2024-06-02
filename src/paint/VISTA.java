@@ -57,7 +57,7 @@ private boolean poligonoEnProgreso = false;
         });
     
         ((AbstractDocument) nombreArchivo.getDocument()).setDocumentFilter(new DocumentFilter() {
-            private final int MAX_LENGTH = 20;
+            private final int MAX_LENGTH = 25;
     
             @Override
             public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {

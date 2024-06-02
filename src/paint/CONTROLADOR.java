@@ -38,37 +38,36 @@ public class CONTROLADOR {
         paint.dibujarPoligonoR(x, y, x2, y2, nPoints, g, color, paint.isRelleno());
     }
 
-   public void dibujarPoligonoI(int[] xPoints, int[] yPoints, int nPoints, Graphics g, Color color, boolean fill, boolean finalize) {
-    paint.dibujarPoligonoI(xPoints, yPoints, nPoints, g, color, fill, finalize);
-}
-
-public void guardarFicheroYPoligonos(String nombre) throws SQLException, IOException {
-    int ficheroId = modelo.guardarFichero(nombre);
-    List<PAINT.Figura> figuras = paint.obtenerFigurasDibujadas();
-    for (PAINT.Figura figura : figuras) {
-        int cantidadLados = figura.getCantidadLados();
-        int poligonoId = modelo.guardarPoligono(cantidadLados, ficheroId, figura.isRelleno(), figura.getColor());
-        for (int i = 0; i < figura.getPuntos().length; i += 2) {
-            modelo.guardarPunto(poligonoId, figura.getPuntos()[i], figura.getPuntos()[i + 1]);
-        }
+    public void dibujarPoligonoI(int[] xPoints, int[] yPoints, int nPoints, Graphics g, Color color, boolean fill, boolean finalize) {
+        paint.dibujarPoligonoI(xPoints, yPoints, nPoints, g, color, fill, finalize);
     }
-    generarSVG(nombre, figuras);
-}
+
+    public void guardarFicheroYPoligonos(String nombre) throws SQLException, IOException {
+        int ficheroId = modelo.guardarFichero(nombre);
+        List<PAINT.Figura> figuras = paint.obtenerFigurasDibujadas();
+        for (PAINT.Figura figura : figuras) {
+            int cantidadLados = figura.getCantidadLados();
+            int poligonoId = modelo.guardarPoligono(cantidadLados, ficheroId, figura.isRelleno(), figura.getColor());
+            for (int i = 0; i < figura.getPuntos().length; i += 2) {
+                modelo.guardarPunto(poligonoId, figura.getPuntos()[i], figura.getPuntos()[i + 1]);
+            }
+        }
+        generarSVG(nombre, figuras);
+    }
 
     public void actualizarDibujo(String nombreFichero) throws SQLException {
-    int ficheroId = modelo.obtenerFicheroIdPorNombre(nombreFichero);
-    
-    // Guardar las nuevas figuras
-    List<PAINT.Figura> figuras = paint.obtenerFigurasDibujadas();
-    for (PAINT.Figura figura : figuras) {
-        int cantidadLados = figura.getCantidadLados();
-        int poligonoId = modelo.guardarPoligono(cantidadLados, ficheroId, figura.isRelleno(), figura.getColor());
-        for (int i = 0; i < figura.getPuntos().length; i += 2) {
-            modelo.guardarPunto(poligonoId, figura.getPuntos()[i], figura.getPuntos()[i + 1]);
+        int ficheroId = modelo.obtenerFicheroIdPorNombre(nombreFichero);
+
+        // Guardar las nuevas figuras
+        List<PAINT.Figura> figuras = paint.obtenerFigurasDibujadas();
+        for (PAINT.Figura figura : figuras) {
+            int cantidadLados = figura.getCantidadLados();
+            int poligonoId = modelo.guardarPoligono(cantidadLados, ficheroId, figura.isRelleno(), figura.getColor());
+            for (int i = 0; i < figura.getPuntos().length; i += 2) {
+                modelo.guardarPunto(poligonoId, figura.getPuntos()[i], figura.getPuntos()[i + 1]);
+            }
         }
     }
-}
-
 
     public void poblarComboBox(JComboBox<String> comboBox) throws SQLException {
         List<String> nombresFicheros = modelo.obtenerNombresFicheros();
@@ -77,35 +76,39 @@ public void guardarFicheroYPoligonos(String nombre) throws SQLException, IOExcep
             comboBox.addItem(nombre);
         }
     }
-public void cargarDibujo(String nombreFichero, Graphics g) throws SQLException {
-    int ficheroId = modelo.obtenerFicheroIdPorNombre(nombreFichero);
-    List<PAINT.Figura> figuras = modelo.obtenerFigurasPorFicheroId(ficheroId);
-    for (PAINT.Figura figura : figuras) {
-        int[] puntos = figura.getPuntos();
-        Color color = Color.decode(figura.getColor());
-        boolean relleno = figura.isRelleno();
-        int cantidadLados = figura.getCantidadLados();
 
-        if (cantidadLados == 0) {
-            paint.dibujarCircunferencia(puntos[0], puntos[1], puntos[2], puntos[3], g, color, relleno);
-        } else if (cantidadLados == 1) {
-            paint.dibujarPunto(puntos[0], puntos[1], g, color);
-        } else if (cantidadLados == 2) {
-            paint.dibujarRecta(puntos[0], puntos[1], puntos[2], puntos[3], g, color, relleno);
-        } else {
-            int[] xPoints = new int[cantidadLados];
-            int[] yPoints = new int[cantidadLados];
-            for (int i = 0; i < cantidadLados; i++) {
-                xPoints[i] = puntos[2 * i];
-                yPoints[i] = puntos[2 * i + 1];
+    public void cargarDibujo(String nombreFichero, Graphics g) throws SQLException {
+        int ficheroId = modelo.obtenerFicheroIdPorNombre(nombreFichero);
+        List<PAINT.Figura> figuras = modelo.obtenerFigurasPorFicheroId(ficheroId);
+        for (PAINT.Figura figura : figuras) {
+            int[] puntos = figura.getPuntos();
+            Color color = Color.decode(figura.getColor());
+            boolean relleno = figura.isRelleno();
+            int cantidadLados = figura.getCantidadLados();
+
+            switch (cantidadLados) {
+                case 0:
+                    paint.dibujarCircunferencia(puntos[0], puntos[1], puntos[2], puntos[3], g, color, relleno);
+                    break;
+                case 1:
+                    paint.dibujarPunto(puntos[0], puntos[1], g, color);
+                    break;
+                case 2:
+                    paint.dibujarRecta(puntos[0], puntos[1], puntos[2], puntos[3], g, color, relleno);
+                    break;
+                default:
+                    int[] xPoints = new int[cantidadLados];
+                    int[] yPoints = new int[cantidadLados];
+                    for (int i = 0; i < cantidadLados; i++) {
+                        xPoints[i] = puntos[2 * i];
+                        yPoints[i] = puntos[2 * i + 1];
+                    }
+                    paint.dibujarPoligonoI(xPoints, yPoints, cantidadLados, g, color, relleno, true);
+                    break;
             }
-            paint.dibujarPoligonoI(xPoints, yPoints, cantidadLados, g, color, relleno, true);
+
         }
     }
-}
-
-
-
 
     private void generarSVG(String nombre, List<PAINT.Figura> figuras) throws IOException {
         // Obtener el tamaño del área de dibujo
@@ -160,38 +163,44 @@ public void cargarDibujo(String nombreFichero, Graphics g) throws SQLException {
             }
         }
     }
-public void eliminarFichero(String nombre) throws SQLException {
-    int ficheroId = modelo.obtenerFicheroIdPorNombre(nombre);
-    modelo.eliminarFichero(ficheroId);
-}
-public void deshacer() {
-    paint.deshacer();
-    vista.limpiarPanel();
-    Graphics g = vista.getAreaDibujo().getGraphics();
-    for (PAINT.Figura f : new ArrayList<>(paint.obtenerFigurasDibujadas())) { // Crear una copia para evitar ConcurrentModificationException
-        int[] puntos = f.getPuntos();
-        Color color = Color.decode(f.getColor());
-        boolean relleno = f.isRelleno();
-        int cantidadLados = f.getCantidadLados();
 
-        if (cantidadLados == 0) {
-            paint.dibujarCircunferencia(puntos[0], puntos[1], puntos[2], puntos[3], g, color, relleno);
-        } else if (cantidadLados == 1) {
-            paint.dibujarPunto(puntos[0], puntos[1], g, color);
-        } else if (cantidadLados == 2) {
-            paint.dibujarRecta(puntos[0], puntos[1], puntos[2], puntos[3], g, color, relleno);
-        } else {
-            int[] xPoints = new int[cantidadLados];
-            int[] yPoints = new int[cantidadLados];
-            for (int i = 0; i < cantidadLados; i++) {
-                xPoints[i] = puntos[2 * i];
-                yPoints[i] = puntos[2 * i + 1];
+    public void eliminarFichero(String nombre) throws SQLException {
+        int ficheroId = modelo.obtenerFicheroIdPorNombre(nombre);
+        modelo.eliminarFichero(ficheroId);
+    }
+
+    public void deshacer() {
+        paint.deshacer();
+        vista.limpiarPanel();
+        Graphics g = vista.getAreaDibujo().getGraphics();
+        for (PAINT.Figura f : new ArrayList<>(paint.obtenerFigurasDibujadas())) { // Crear una copia para evitar ConcurrentModificationException
+            int[] puntos = f.getPuntos();
+            Color color = Color.decode(f.getColor());
+            boolean relleno = f.isRelleno();
+            int cantidadLados = f.getCantidadLados();
+
+            switch (cantidadLados) {
+                case 0:
+                    paint.dibujarCircunferencia(puntos[0], puntos[1], puntos[2], puntos[3], g, color, relleno);
+                    break;
+                case 1:
+                    paint.dibujarPunto(puntos[0], puntos[1], g, color);
+                    break;
+                case 2:
+                    paint.dibujarRecta(puntos[0], puntos[1], puntos[2], puntos[3], g, color, relleno);
+                    break;
+                default:
+                    int[] xPoints = new int[cantidadLados];
+                    int[] yPoints = new int[cantidadLados];
+                    for (int i = 0; i < cantidadLados; i++) {
+                        xPoints[i] = puntos[2 * i];
+                        yPoints[i] = puntos[2 * i + 1];
+                    }
+                    paint.dibujarPoligonoI(xPoints, yPoints, cantidadLados, g, color, relleno, true);
+                    break;
             }
-           paint.dibujarPoligonoI(xPoints, yPoints, cantidadLados, g, color, relleno, true);
+
         }
     }
-}
-
-
 
 }
