@@ -41,6 +41,15 @@ public class CONTROLADOR {
     public void dibujarPoligonoI(int[] xPoints, int[] yPoints, int nPoints, Graphics g, Color color, boolean fill, boolean finalize) {
         paint.dibujarPoligonoI(xPoints, yPoints, nPoints, g, color, fill, finalize);
     }
+    public boolean nombreFicheroExiste(String nombre) throws SQLException {
+    List<String> nombresFicheros = obtenerNombresFicheros();
+    return nombresFicheros.contains(nombre);
+}
+
+public List<String> obtenerNombresFicheros() throws SQLException {
+    // Implementación para obtener los nombres de los archivos guardados en la base de datos
+    return modelo.obtenerNombresFicheros();
+}
 
     public void guardarFicheroYPoligonos(String nombre) throws SQLException, IOException {
         int ficheroId = modelo.guardarFichero(nombre);
@@ -70,7 +79,7 @@ public class CONTROLADOR {
     }
 
     public void poblarComboBox(JComboBox<String> comboBox) throws SQLException {
-        List<String> nombresFicheros = modelo.obtenerNombresFicheros();
+        List<String> nombresFicheros = obtenerNombresFicheros();
         comboBox.removeAllItems(); // Limpiar los elementos existentes
         for (String nombre : nombresFicheros) {
             comboBox.addItem(nombre);
@@ -201,6 +210,10 @@ public class CONTROLADOR {
             }
 
         }
+    }
+
+   public void limpiarDibujos() {
+        paint.limpiarFiguras();
     }
 
 }

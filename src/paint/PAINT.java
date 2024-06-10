@@ -87,7 +87,7 @@ public class PAINT {
         figurasDibujadas.add(new Figura(new int[]{x, y, x2, y2}, fill, getColorHex(), 0));
     }
 
-    public void dibujarPoligonoR(int x, int y, int x2, int y2, int nPoints, Graphics g, Color color, boolean fill) {
+       public void dibujarPoligonoR(int x, int y, int x2, int y2, int nPoints, Graphics g, Color color, boolean fill) {
         g.setColor(color);
 
         int[] puntosX = new int[nPoints];
@@ -142,7 +142,9 @@ public class PAINT {
     public List<Figura> obtenerFigurasDibujadas() {
         return figurasDibujadas;
     }
-
+  public void limpiarFiguras() {
+        figurasDibujadas.clear();
+    }
     public void deshacer() {
         if (!figurasDibujadas.isEmpty()) {
             figurasDibujadas.remove(figurasDibujadas.size() - 1);

@@ -572,3 +572,51 @@ Polígono Regular:
 Punto: (518, 397)
 Punto: (548, 399)
 
+Polígono Regular: 
+Punto: (541, 291)
+Punto: (769, 332)
+
+Polígono Regular: 
+Punto: (411, 124)
+Punto: (410, 148)
+
+Polígono Regular: 
+Punto: (931, 368)
+Punto: (1000, 366)
+
+Polígono Regular: 
+Punto: (657, 221)
+Punto: (701, 261)
+
+Polígono Regular: 
+Punto: (613, 250)
+Punto: (651, 266)
+
+Polígono Regular: 
+Punto: (611, 275)
+Punto: (607, 247)
+
+Polígono Regular: 
+Punto: (445, 229)
+Punto: (392, 310)
+
+Polígono Regular: 
+Punto: (554, 424)
+Punto: (795, 419)
+
+Polígono Regular: 
+Punto: (916, 384)
+Punto: (972, 458)
+
+Polígono Regular: 
+Punto: (1084, 424)
+Punto: (1107, 416)
+
+Polígono Regular: 
+Punto: (933, 225)
+Punto: (970, 230)
+
+Polígono Regular: 
+Punto: (1042, 226)
+Punto: (1116, 172)
+
